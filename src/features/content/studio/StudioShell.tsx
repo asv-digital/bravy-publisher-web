@@ -9,9 +9,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { AlertTriangle, ArrowLeft, Redo2, Undo2, Loader2, ImageDown, Palette } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Redo2, Undo2, Loader2, ImageDown } from 'lucide-react'
 import { getContent } from '../api/content-api'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -20,7 +19,6 @@ import { SlideThumbs } from './SlideThumbs'
 import { RegenerateSlideButton } from './RegenerateSlideButton'
 import { Inspector } from './Inspector'
 import { StudioToolbar } from './StudioToolbar'
-import { StylesPanel } from './StylesPanel'
 import { selectableBoxes } from './lib/selectable'
 import { collectScenePayloads } from './lib/content-to-doc'
 import { useStudioScene } from './hooks/use-studio-scene'
@@ -29,6 +27,7 @@ import { usePersistText } from './hooks/use-persist-text'
 import { useStudioExport } from './hooks/use-studio-export'
 import { useStudioStore } from './studio-store'
 import { initialRaw } from './lib/content-to-doc'
+import { PublishDialog } from '../components/editor/publish-dialog'
 
 export default function StudioShell({ contentId }: { contentId: string }) {
   const { data: content, isLoading, isError } = useQuery({
@@ -70,8 +69,8 @@ export function StudioEditor({ content }: { content: import('@/types/content').C
   usePersistOverrides(content)
   usePersistText(content)
   const { exporting, done, total, exportAll } = useStudioExport(content)
-  const router = useRouter()
   const queryClient = useQueryClient()
+  const [publishOpen, setPublishOpen] = useState(false)
 
   const activeIndex = useStudioStore((s) => s.activeIndex)
   const setActive = useStudioStore((s) => s.setActive)
@@ -87,7 +86,6 @@ export function StudioEditor({ content }: { content: import('@/types/content').C
 
   const wrapRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState(540)
-  const [stylesOpen, setStylesOpen] = useState(false)
 
   // inicializa overrides + draft de texto + elementos livres; re-inicializa
   // quando o content muda no servidor (ex.: regenerar slide → updatedAt muda)
@@ -137,10 +135,10 @@ export function StudioEditor({ content }: { content: import('@/types/content').C
       const n = await exportAll(scene, metrics)
       toast.success(`${n} slides exportados e salvos`)
       // o export gravou imageUrl/imageKey nos slides — invalida os caches pra
-      // listagem/detalhe refletirem, e volta pra listagem fechando o fluxo
+      // listagem/detalhe refletirem, e abre o fluxo de publicação/agendamento
       queryClient.invalidateQueries({ queryKey: ['content', content.id] })
       queryClient.invalidateQueries({ queryKey: ['contents'] })
-      router.push('/content')
+      setPublishOpen(true)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Falha ao exportar')
     }
@@ -180,10 +178,6 @@ export function StudioEditor({ content }: { content: import('@/types/content').C
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">{dirty || textDirty ? 'salvando…' : 'salvo'}</span>
-          <Button variant="outline" size="sm" onClick={() => setStylesOpen(true)}>
-            <Palette className="size-3.5" data-icon="inline-start" />
-            Estilos
-          </Button>
           <RegenerateSlideButton contentId={content.id} position={activeIndex} total={scene?.slides.length ?? 0} />
           <Button variant="ghost" size="icon" onClick={undo} aria-label="Desfazer">
             <Undo2 className="size-4" />
@@ -233,7 +227,13 @@ export function StudioEditor({ content }: { content: import('@/types/content').C
         </aside>
       </div>
 
-      <StylesPanel open={stylesOpen} onClose={() => setStylesOpen(false)} tenantKit={brandKit} />
+      {/* pós-aprovação: publicar agora ou agendar */}
+      <PublishDialog
+        contentId={content.id}
+        initialMode="schedule"
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+      />
     </div>
   )
 }

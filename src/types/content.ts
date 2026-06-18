@@ -36,8 +36,12 @@ export interface PublishTarget {
   scheduledAt?: string
   publishedAt?: string
   externalMediaId?: string
-  status: 'PENDING' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED'
-  attempts: number
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
+  /** 0–100, atualizado pelo backend conforme a publicação avança. */
+  progress?: number
+  /** Rótulo da fase atual, ex.: "Enviando slide 2/6". */
+  progressPhase?: string
+  attempts?: number
   lastError?: string
 }
 

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Dialog,
   DialogContent,
@@ -52,6 +53,16 @@ const PLATFORM_CONFIG: Record<
   },
 }
 
+// Plataformas que identificam a conta por @handle (vs. nome de empresa/pessoa).
+const HANDLE_PLATFORMS: Platform[] = ['INSTAGRAM', 'TWITTER', 'TIKTOK']
+
+// Garante exatamente um "@" na frente do handle, sem duplicar caso o nome já
+// venha prefixado (mock/legado).
+function displayAccountName(platform: Platform, name: string): string {
+  if (!HANDLE_PLATFORMS.includes(platform)) return name
+  return name.startsWith('@') ? name : `@${name}`
+}
+
 interface AccountCardProps {
   account: SocialAccount
 }
@@ -61,6 +72,7 @@ export function AccountCard({ account }: AccountCardProps) {
   const disconnectMutation = useDisconnectAccount()
   const config = PLATFORM_CONFIG[account.platform]
   const PlatformIcon = config.icon
+  const displayName = displayAccountName(account.platform, account.accountName)
 
   const now = new Date()
   const expiresAt = new Date(account.tokenExpiresAt)
@@ -83,16 +95,16 @@ export function AccountCard({ account }: AccountCardProps) {
     <Card>
       <CardContent className="pt-0">
         <div className="flex items-start gap-4">
-          <div
-            className={cn(
-              'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl',
-              config.bgColor,
+          <Avatar size="lg" className="h-12 w-12 shrink-0">
+            {account.avatarUrl && (
+              <AvatarImage src={account.avatarUrl} alt={displayName} />
             )}
-          >
-            <PlatformIcon className={cn('h-6 w-6', config.textColor)} />
-          </div>
+            <AvatarFallback className={cn(config.bgColor)}>
+              <PlatformIcon className={cn('h-6 w-6', config.textColor)} />
+            </AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">{account.accountName}</p>
+            <p className="text-sm font-semibold truncate">{displayName}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {config.label} &middot; {account.accountId}
             </p>
@@ -134,7 +146,7 @@ export function AccountCard({ account }: AccountCardProps) {
                 <DialogTitle>Desconectar conta</DialogTitle>
                 <DialogDescription>
                   Tem certeza que deseja desconectar{' '}
-                  <strong>{account.accountName}</strong>? Conteudos agendados
+                  <strong>{displayName}</strong>? Conteudos agendados
                   para esta conta nao serao publicados.
                 </DialogDescription>
               </DialogHeader>

@@ -138,10 +138,20 @@ const routes: MockRoute[] = [
     },
   },
   {
+    match: (m, u) => m === 'get' && u.includes('/publish/status/'),
+    handle: async () => {
+      await delay(400)
+      return {
+        data: { id: 'pt_mock', status: 'COMPLETED', progress: 100, progressPhase: 'Publicado', externalMediaId: '18454368775114499' },
+        status: 200,
+      }
+    },
+  },
+  {
     match: (m, u) => m === 'post' && u.includes('/publish/'),
     handle: async () => {
       await delay(1000)
-      return { data: { id: 'pt_mock', status: 'PUBLISHED', externalMediaId: '184543687751144' + Math.floor(Math.random() * 100) }, status: 200 }
+      return { data: { id: 'pt_mock', status: 'PENDING', progress: 0 }, status: 200 }
     },
   },
   {

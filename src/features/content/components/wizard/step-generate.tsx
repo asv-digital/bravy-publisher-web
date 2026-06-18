@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import { PERSONAS, PATTERNS, PERSONA_COLORS } from '@/lib/constants'
 import { api } from '@/lib/api-client'
 import type { Content } from '@/types/content'
+import { SYSTEM_TEMPLATES } from '@/features/templates/lib/system-templates'
 import { mapApiContent } from '../../lib/content-mapper'
 import { useWizardStore } from './wizard-store'
 
@@ -19,6 +20,7 @@ export function StepGenerate() {
   const pattern = useWizardStore((s) => s.pattern)
   const theme = useWizardStore((s) => s.theme)
   const template = useWizardStore((s) => s.template)
+  const selectedCustom = useWizardStore((s) => s.selectedCustom)
   const setGeneratedContent = useWizardStore((s) => s.setGeneratedContent)
   const nextStep = useWizardStore((s) => s.nextStep)
 
@@ -75,11 +77,18 @@ export function StepGenerate() {
     setErrorMessage('')
 
     try {
+      const isCustom = template === 'custom' && !!selectedCustom
+      const sysTemplate = !isCustom && template !== 'auto' ? SYSTEM_TEMPLATES.find((t) => t.family === template) : undefined
+      // custom: carrega o layout (e o estilo) no styleData → persiste no content
+      const styleData = isCustom
+        ? { ...(selectedCustom!.styleData ?? {}), name: selectedCustom!.name, template: 'custom', layout: selectedCustom!.layout }
+        : sysTemplate?.styleData
       const { data: raw } = await api.post<Content>('/generation/generate', {
         tema: theme,
         persona,
         pattern,
         ...(template !== 'auto' ? { template } : {}),
+        ...(styleData ? { styleData } : {}),
       })
       const data = mapApiContent(raw)
 

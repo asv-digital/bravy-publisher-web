@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Content, Persona, Pattern } from '@/types/content'
+import type { CustomTemplate } from '@/features/templates/api/templates-api'
 
 /**
  * Máquina de estados explícita do wizard (RFC §7):
@@ -11,7 +12,7 @@ export type WizardPhase = (typeof WIZARD_PHASES)[number]
 
 export const phaseForStep = (step: number): WizardPhase => WIZARD_PHASES[Math.min(Math.max(step, 1), 6) - 1]!
 
-export type WizardTemplate = 'auto' | 'step' | 'compendium'
+export type WizardTemplate = 'auto' | 'step' | 'compendium' | 'tweet' | 'custom'
 
 interface WizardState {
   currentStep: number
@@ -21,6 +22,8 @@ interface WizardState {
   theme: string
   /** família visual: automático (pelo padrão) ou escolha explícita. */
   template: WizardTemplate
+  /** template custom escolhido (quando template === 'custom'). */
+  selectedCustom: CustomTemplate | null
   generatedContent: Content | null
   selectedAccountIds: string[]
   scheduledAt: string | null
@@ -28,7 +31,7 @@ interface WizardState {
   setPersona: (persona: Persona) => void
   setPattern: (pattern: Pattern) => void
   setTheme: (theme: string) => void
-  setTemplate: (template: WizardTemplate) => void
+  setTemplate: (template: WizardTemplate, custom?: CustomTemplate | null) => void
   setGeneratedContent: (content: Content | null) => void
   setAccounts: (ids: string[]) => void
   setSchedule: (date: string | null) => void
@@ -50,6 +53,7 @@ export const useWizardStore = create<WizardState>((set) => ({
   pattern: null,
   theme: '',
   template: 'auto',
+  selectedCustom: null,
   generatedContent: null,
   selectedAccountIds: [],
   scheduledAt: null,
@@ -57,7 +61,7 @@ export const useWizardStore = create<WizardState>((set) => ({
   setPersona: (persona) => set({ persona }),
   setPattern: (pattern) => set({ pattern }),
   setTheme: (theme) => set({ theme }),
-  setTemplate: (template) => set({ template }),
+  setTemplate: (template, custom = null) => set({ template, selectedCustom: custom }),
   setGeneratedContent: (content) => set({ generatedContent: content }),
   setAccounts: (ids) => set({ selectedAccountIds: ids }),
   setSchedule: (date) => set({ scheduledAt: date }),
@@ -71,6 +75,7 @@ export const useWizardStore = create<WizardState>((set) => ({
       pattern: null,
       theme: '',
       template: 'auto',
+      selectedCustom: null,
       generatedContent: null,
       selectedAccountIds: [],
       scheduledAt: null,

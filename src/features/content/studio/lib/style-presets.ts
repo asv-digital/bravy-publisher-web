@@ -4,7 +4,7 @@
  * é só um BrandKit nomeado + template. 5 defaults aqui; estilos do usuário
  * vêm de /brand-kit (kits nomeados do tenant).
  */
-import type { BrandKit, TemplateFamily } from '@publisher/scene-engine'
+import type { BrandKit, LayoutSpec, TemplateFamily } from '@publisher/scene-engine'
 import { SEED_BRAND_KIT } from '@publisher/scene-engine'
 
 export interface StylePreset {
@@ -165,9 +165,12 @@ export interface StyleData {
   presetId?: string
   name: string
   template: TemplateFamily
-  typography: BrandKit['typography']
-  palette: BrandKit['palette']
+  /** opcionais: templates custom podem usar só o kit da marca. */
+  typography?: BrandKit['typography']
+  palette?: BrandKit['palette']
   brand?: BrandKit['brand']
+  /** layout do template custom (quando template === 'custom'). */
+  layout?: LayoutSpec
 }
 
 export function presetToStyleData(p: StylePreset): StyleData {

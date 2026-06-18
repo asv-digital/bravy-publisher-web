@@ -13,3 +13,11 @@ export async function publishContent(
   const { data } = await api.post<PublishTarget>(`/publish/${contentId}`, input)
   return data
 }
+
+/** Lê status + progresso de um publish target (usado no polling da barra). */
+export async function getPublishTarget(
+  publishTargetId: string,
+): Promise<PublishTarget> {
+  const { data } = await api.get<PublishTarget>(`/publish/status/${publishTargetId}`)
+  return data
+}

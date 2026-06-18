@@ -3,21 +3,19 @@
 import { useState } from 'react'
 import { Lightbulb, Loader2, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { Sparkles } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
-import { useWizardStore, type WizardTemplate } from './wizard-store'
+import { SYSTEM_TEMPLATES } from '@/features/templates/lib/system-templates'
+import { TemplateThumb } from '@/features/templates/components/template-thumb'
+import { LayoutPreview } from '@/features/templates/components/layout-preview'
+import { useCustomTemplates } from '@/features/templates/hooks/use-custom-templates'
+import { useWizardStore } from './wizard-store'
 
 const MAX_CHARS = 500
-
-/** famílias visuais do scene-engine (escolha explícita; auto = decide pelo padrão). */
-const TEMPLATES: Array<{ value: WizardTemplate; label: string; desc: string }> = [
-  { value: 'auto', label: 'Automático', desc: 'Escolhe pelo padrão do hook' },
-  { value: 'step', label: 'Editorial', desc: 'Serif + creme, passos numerados' },
-  { value: 'compendium', label: 'Terminal', desc: 'Caixa escura estilo terminal' },
-]
 
 export function StepTheme() {
   const theme = useWizardStore((s) => s.theme)
@@ -25,7 +23,9 @@ export function StepTheme() {
   const persona = useWizardStore((s) => s.persona)
   const pattern = useWizardStore((s) => s.pattern)
   const template = useWizardStore((s) => s.template)
+  const selectedCustom = useWizardStore((s) => s.selectedCustom)
   const setTemplate = useWizardStore((s) => s.setTemplate)
+  const { data: customTemplates } = useCustomTemplates()
 
   const [ideas, setIdeas] = useState<string[]>([])
   const [loadingIdeas, setLoadingIdeas] = useState(false)
@@ -105,25 +105,82 @@ export function StepTheme() {
         </div>
       </div>
 
-      {/* família visual */}
+      {/* template do post */}
       <div className="space-y-2">
-        <Label>Estilo visual</Label>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {TEMPLATES.map((t) => (
+        <Label>Template</Label>
+        <p className="text-xs text-muted-foreground">
+          O padrão visual do post. Gera já dentro do template escolhido.
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {/* Automático: sem preview, decide pelo padrão do hook */}
+          <button
+            type="button"
+            onClick={() => setTemplate('auto')}
+            className={cn(
+              'flex flex-col overflow-hidden rounded-xl border-2 text-left transition-colors',
+              template === 'auto' ? 'border-primary' : 'border-border hover:border-primary/50',
+            )}
+          >
+            <div className="flex aspect-square w-full items-center justify-center bg-muted/40">
+              <Sparkles className="size-6 text-muted-foreground" />
+            </div>
+            <div className="p-2">
+              <span className="block text-sm font-medium">Automático</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">Decide pelo padrão</span>
+            </div>
+          </button>
+
+          {SYSTEM_TEMPLATES.map((t) => (
             <button
-              key={t.value}
+              key={t.id}
               type="button"
-              onClick={() => setTemplate(t.value)}
+              onClick={() => setTemplate(t.family)}
               className={cn(
-                'rounded-lg border p-3 text-left transition-colors',
-                template === t.value ? 'border-primary bg-accent' : 'border-border bg-card hover:border-primary/50',
+                'flex flex-col overflow-hidden rounded-xl border-2 text-left transition-colors',
+                template === t.family ? 'border-primary' : 'border-border hover:border-primary/50',
               )}
             >
-              <span className="block text-sm font-medium">{t.label}</span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">{t.desc}</span>
+              <div className="aspect-square w-full overflow-hidden bg-muted/40">
+                <TemplateThumb template={t} size={220} />
+              </div>
+              <div className="p-2">
+                <span className="block text-sm font-medium">{t.name}</span>
+                <span className="mt-0.5 block truncate text-xs text-muted-foreground">{t.description}</span>
+              </div>
             </button>
           ))}
         </div>
+
+        {/* templates customizados do usuário */}
+        {!!customTemplates?.length && (
+          <div className="space-y-2 pt-2">
+            <span className="text-xs font-medium text-muted-foreground">Seus templates</span>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {customTemplates.map((t) => {
+                const selected = template === 'custom' && selectedCustom?.id === t.id
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTemplate('custom', t)}
+                    className={cn(
+                      'flex flex-col overflow-hidden rounded-xl border-2 text-left transition-colors',
+                      selected ? 'border-primary' : 'border-border hover:border-primary/50',
+                    )}
+                  >
+                    <div className="aspect-square w-full overflow-hidden bg-muted/40">
+                      <LayoutPreview spec={t.layout} styleData={t.styleData ?? null} size={220} />
+                    </div>
+                    <div className="p-2">
+                      <span className="block truncate text-sm font-medium">{t.name}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">{t.kind === 'post' ? 'Post único' : 'Carrossel'}</span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {ideas.length > 0 && (

@@ -18,6 +18,7 @@ import { contentToDoc, docFromRaw } from '../lib/content-to-doc'
 import { ensureFamilyLoaded, ensureStudioFonts, isFamilyLoaded, sanitizeKit } from '../lib/browser-metrics'
 import { useStudioStore } from '../studio-store'
 import { useBrandKit } from './use-brand-kit'
+import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 
 export interface StudioScene {
   scene: SceneGraph | null
@@ -32,14 +33,24 @@ export function useStudioScene(content: Content): StudioScene {
   const [metrics, setMetrics] = useState<MetricsProvider | null>(null)
   const [fontError, setFontError] = useState<string | null>(null)
   const { kit: tenantKit } = useBrandKit()
+  const { data: accounts } = useAccounts()
+  // canal social cuja identidade (avatar + @) alimenta o card "tweet": o primeiro
+  // Instagram ativo; cai pro primeiro IG conectado mesmo expirado como fallback.
+  const igAccount = useMemo(() => {
+    const list = accounts ?? []
+    return (
+      list.find((a) => a.platform === 'INSTAGRAM' && a.connected) ??
+      list.find((a) => a.platform === 'INSTAGRAM')
+    )
+  }, [accounts])
   const style = useStudioStore((s) => s.style)
   // estilo do POST sobrepõe o kit do tenant (tipografia/paleta; brand opcional)
   const kit = useMemo<BrandKit>(() => {
     if (!style) return tenantKit
     return {
       ...tenantKit,
-      typography: style.typography,
-      palette: style.palette,
+      typography: style.typography ?? tenantKit.typography,
+      palette: style.palette ?? tenantKit.palette,
       brand: style.brand ?? tenantKit.brand,
     }
   }, [tenantKit, style])
@@ -109,8 +120,24 @@ export function useStudioScene(content: Content): StudioScene {
         ),
       ]),
     )
-    return resolveScene({ ...baseDoc, overrides: safeOverrides, added: safeAdded }, metrics, sanitizeKit(kit))
-  }, [metrics, baseDoc, overrides, added, kit])
+    // identidade do canal conectado no card "tweet" (avatar + @handle); demais
+    // templates mantêm o handle da marca. Sem canal → placeholder do brand kit.
+    const safeKit = sanitizeKit(kit)
+    const sceneKit =
+      baseDoc.content.template === 'tweet' && igAccount
+        ? {
+            ...safeKit,
+            brand: {
+              ...safeKit.brand,
+              handle: igAccount.accountName.startsWith('@')
+                ? igAccount.accountName
+                : `@${igAccount.accountName}`,
+              avatarUrl: igAccount.avatarUrl ?? safeKit.brand.avatarUrl,
+            },
+          }
+        : safeKit
+    return resolveScene({ ...baseDoc, layout: style?.layout, overrides: safeOverrides, added: safeAdded }, metrics, sceneKit)
+  }, [metrics, baseDoc, overrides, added, kit, style, igAccount])
 
   return { scene, metrics, brandKit: kit, ready: !!scene, fontError }
 }

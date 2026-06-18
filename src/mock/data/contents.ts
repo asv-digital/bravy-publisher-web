@@ -73,7 +73,7 @@ export const mockContents: Content[] = [
     authorId: 'usr_01',
     templateId: 'tpl_01',
     publishTargets: [
-      { id: 'pt_01', socialAccountId: 'sa_01', publishedAt: '2026-05-02T20:55:00Z', externalMediaId: '18454368775114403', status: 'PUBLISHED', attempts: 1 },
+      { id: 'pt_01', socialAccountId: 'sa_01', publishedAt: '2026-05-02T20:55:00Z', externalMediaId: '18454368775114403', status: 'COMPLETED', attempts: 1 },
     ],
     renderJob: { id: 'rj_01', status: 'COMPLETED', progress: 100, attempts: 1 },
     generation: { id: 'gen_01', prompt: 'Gere carrossel sobre recuperacao tributaria...', response: {}, model: 'claude-sonnet-4-20250514', inputTokens: 4200, outputTokens: 1800, durationMs: 8500, createdAt: '2026-05-01T14:00:00Z' },
@@ -101,7 +101,7 @@ export const mockContents: Content[] = [
     authorId: 'usr_01',
     templateId: 'tpl_01',
     publishTargets: [
-      { id: 'pt_02', socialAccountId: 'sa_01', publishedAt: '2026-05-04T20:00:00Z', externalMediaId: '18454368775114404', status: 'PUBLISHED', attempts: 1 },
+      { id: 'pt_02', socialAccountId: 'sa_01', publishedAt: '2026-05-04T20:00:00Z', externalMediaId: '18454368775114404', status: 'COMPLETED', attempts: 1 },
     ],
     renderJob: { id: 'rj_02', status: 'COMPLETED', progress: 100, attempts: 1 },
   },
@@ -338,7 +338,7 @@ export const mockContents: Content[] = [
     updatedAt: '2026-05-20T09:00:00Z',
     authorId: 'usr_01',
     publishTargets: [
-      { id: 'pt_12', socialAccountId: 'sa_01', status: 'PUBLISHING', attempts: 1 },
+      { id: 'pt_12', socialAccountId: 'sa_01', status: 'PROCESSING', attempts: 1 },
     ],
     renderJob: { id: 'rj_12', status: 'COMPLETED', progress: 100, attempts: 1 },
   },

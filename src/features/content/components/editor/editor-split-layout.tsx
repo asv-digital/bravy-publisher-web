@@ -301,7 +301,7 @@ export function EditorSplitLayout({ content }: EditorSplitLayoutProps) {
       {publishMode && (
         <PublishDialog
           contentId={content.id}
-          mode={publishMode}
+          initialMode={publishMode}
           open={publishMode !== null}
           onOpenChange={(open) => {
             if (!open) setPublishMode(null)

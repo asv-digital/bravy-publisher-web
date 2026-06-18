@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import { Separator } from '@/components/ui/separator'
 import { useWizardStore } from './wizard-store'
 import { WizardStepper } from './wizard-stepper'
@@ -36,6 +37,17 @@ function CurrentStep() {
 }
 
 export function WizardContainer() {
+  // O store do wizard é singleton de módulo e sobrevive à navegação. Sem este
+  // reset, voltar pro listing e clicar "Novo conteúdo" reabriria o último
+  // rascunho (phase='studio' + generatedContent ainda setados). Entrar em
+  // /content/new sempre começa do zero. Reset no render (guardado por ref) evita
+  // flash do estúdio antigo e um fetch desnecessário do conteúdo anterior.
+  const didReset = useRef(false)
+  if (!didReset.current) {
+    didReset.current = true
+    useWizardStore.getState().reset()
+  }
+
   return (
     <div className="space-y-8">
       <WizardStepper />
